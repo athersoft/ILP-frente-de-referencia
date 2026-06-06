@@ -43,7 +43,12 @@ def saveEpsilonFront(filePath, instanceUrl, epsilonData):
         "paretoFront": {
             "x": epsilonData['paretoX'], # Transport
             "y": epsilonData['paretoY']  # Infrastructure
+        },
+        "info":{
+            "simplexIterations" : epsilonData['simplexIterations'],
+            "branchNodes" : epsilonData['branchNodes']
         }
+
     }
 
     allData[instanceUrl] = instanceEntry

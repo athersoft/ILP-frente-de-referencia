@@ -34,7 +34,7 @@ var CostoInfra =
 var CostoTransp = sum{i in I, j in J} TH * (RC[i] + TC[i,j]) * d[j] * Y[i,j];
 
 minimize TotalCost:
-    CostoInfra;
+    CostoInfra + 1e-9*CostoTransp;
 
 s.t. epsilonConstraint: CostoTransp <= epsilon;
 s.t. Assign{j in J}: sum{i in I} Y[i,j] = 1;
@@ -80,7 +80,7 @@ var CostoInfra =
 var CostoTransp = sum{i in I, j in J} TH * (RC[i] + TC[i,j]) * d[j] * Y[i,j];
 
 minimize TotalCost:
-    CostoTransp;
+    CostoTransp+ 1e-9*CostoInfra;
 
 s.t. epsilonConstraint: CostoInfra <= epsilon;
 s.t. Assign{j in J}: sum{i in I} Y[i,j] = 1;

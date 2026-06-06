@@ -16,7 +16,7 @@ LICENSE_UUID = "b84215a6-2e17-4c6f-8d78-2019e0f3c0ff" #Mi licencia de AMPL, no t
 
 if __name__ == "__main__":
 
-    instancesToEvaluate = ["30x15-0","30x15-1","30x15-3","30x15-5","50x25-0","50x25-1","50x25-3","50x25-5"]
+    instancesToEvaluate = ["30x15-3"]
 
     for instance in instancesToEvaluate:
         #DATA_URL = instance #Acá se selecciona la instancia que se evaluará
@@ -30,10 +30,10 @@ if __name__ == "__main__":
         startTimeLex = time.time()
 
         transportMin, aux = solveInstance(currentInstance, model = lexTransport, limitVar= "minInfra")
-        aux, infraMax = solveInstance(currentInstance, model = lexInfrastructure, limitVar = "minTransp", limitValue = math.ceil(transportMin))
+        aux, infraMax = solveInstance(currentInstance, model = lexInfrastructure, limitVar = "minTransp", limitValue = math.ceil(transportMin*1.001))
         
         aux, infraMin = solveInstance(currentInstance, model = lexInfrastructure, limitVar="minTransp")
-        transportMax, aux = solveInstance(currentInstance, model = lexTransport, limitVar = "minInfra", limitValue = math.ceil(infraMin))
+        transportMax, aux = solveInstance(currentInstance, model = lexTransport, limitVar = "minInfra", limitValue = math.ceil(infraMin*1.001))
 
         endTimeLex = time.time() 
         tiempoLex = endTimeLex - startTimeLex
@@ -42,12 +42,16 @@ if __name__ == "__main__":
         paretoX = []
         paretoY = []
         paretoCDs = []
+        totalSimplexIterations = 0
+        branchNodes = 0
 
         epsilonSteps1 = np.linspace(infraMin, infraMax, steps)
         
         startTimeEp1 = time.time()
         for step in epsilonSteps1:
-            transportCost, infraCost, cdsAbiertos = solveEpsilon(currentInstance, mTransport, step)
+            transportCost, infraCost, cdsAbiertos, iter, branchs = solveEpsilon(currentInstance, mTransport, step)
+            totalSimplexIterations += iter
+            branchNodes += branchs
             if transportCost is not None:
                 paretoX.append(transportCost)
                 paretoY.append(infraCost)
@@ -59,7 +63,9 @@ if __name__ == "__main__":
         
         startTimeEp2 = time.time()
         for step in epsilonSteps2:
-            transportCost, infraCost,cdsAbiertos = solveEpsilon(currentInstance, mInfrastructure, step)
+            transportCost, infraCost,cdsAbiertos, iter, branchs = solveEpsilon(currentInstance, mInfrastructure, step)
+            totalSimplexIterations += iter
+            branchNodes += branchs
             if infraCost is not None:
                 paretoX.append(transportCost)
                 paretoY.append(infraCost)
@@ -141,7 +147,9 @@ if __name__ == "__main__":
             "infraMin": infraMin,
             "infraMax": infraMax,
             "paretoX": paretoX, 
-            "paretoY": paretoY  
+            "paretoY": paretoY,
+            "simplexIterations": totalSimplexIterations,
+            "branchNodes": branchNodes
         }
         jsonName = f"{instance.split('/')[-1]}.json"
         saveEpsilonFront(jsonName, name, dataToSave)
